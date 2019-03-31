@@ -6,7 +6,10 @@ This file creates your application.
 """
 
 from app import app
-from flask import render_template, request
+from flask import render_template, request,jsonify
+from .forms import UploadForm
+from werkzeug import secure_filename
+import os
 
 ###
 # Routing for your application.
@@ -43,6 +46,22 @@ def form_errors(form):
             error_messages.append(message)
 
     return error_messages
+
+
+@app.route('/upload', methods=["POST"])
+def upload():
+    form= UploadForm()
+    if form.validate_on_submit():
+        description=form.description.data
+        photo= form.fileupload.data
+        filename= secure_filename(photo.filename)
+        try:
+            photo.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            return jsonify(message="200", filename=filename, description=description)
+        except Exception as e:
+            print e
+            return jsonify(errors=["internal Error"])
+    return jsonify(errors=form_errors(form))
 
 
 ###
