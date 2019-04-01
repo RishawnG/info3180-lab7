@@ -32,6 +32,7 @@ def index(path):
     
     
 @app.route("/api/upload", methods=["POST"])
+
 def upload():
     form = UploadForm()
     if form.validate_on_submit():
