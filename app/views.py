@@ -8,7 +8,7 @@ This file creates your application.
 from app import app
 from flask import render_template, request,jsonify
 from .forms import UploadForm
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 import os
 
 ###
@@ -26,11 +26,22 @@ def index(path):
     Because we use HTML5 history mode in vue-router we need to configure our
     web server to redirect all routes to index.html. Hence the additional route
     "/<path:path".
-
     Also we will render the initial webpage and then let VueJS take control.
     """
     return render_template('index.html')
-
+    
+    
+@app.route("/api/upload", methods=["POST"])
+def upload():
+    form = UploadForm()
+    if form.validate_on_submit():
+        description=form.description.data
+        photoupload= form.photo.data
+        filename= secure_filename(photoupload.filename)
+        photoupload.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return jsonify(message="200", filename=filename, description=description)
+    
+    return jsonify(errors=form_errors(form))
 
 # Here we define a function to collect form errors from Flask-WTF
 # which we can later use
@@ -48,20 +59,7 @@ def form_errors(form):
     return error_messages
 
 
-@app.route('/upload', methods=["POST"])
-def upload():
-    form= UploadForm()
-    if form.validate_on_submit():
-        description=form.description.data
-        photo= form.fileupload.data
-        filename= secure_filename(photo.filename)
-        try:
-            photo.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            return jsonify(message="200", filename=filename, description=description)
-        except Exception as e:
-            print e
-            return jsonify(errors=["internal Error"])
-    return jsonify(errors=form_errors(form))
+
 
 
 ###
